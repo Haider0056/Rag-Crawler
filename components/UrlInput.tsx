@@ -11,7 +11,8 @@ export default function UrlInput() {
 
         setLoading(true);
         try {
-            const res = await fetch(process.env.NEXT_PUBLIC_SCRAPER_API_URL as string, {
+            const apiUrl = process.env.NEXT_PUBLIC_SCRAPER_API_URL || "http://localhost:5000/scrape"; 
+            const res = await fetch(apiUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ url }),

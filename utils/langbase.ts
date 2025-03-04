@@ -1,12 +1,15 @@
 import { Langbase, getRunner } from 'langbase';
 
-const apiKey = process.env.NEXT_PUBLIC_LANGBASE_API_KEY;
+const getLangbase = () => {
+    const apiKey = process.env.NEXT_PUBLIC_LANGBASE_API_KEY;
+    if (!apiKey) {
+        throw new Error("Missing Langbase API Key. Check your .env.local file.");
+    }
+    return new Langbase({ apiKey });
+};
 
-if (!apiKey) {
-    throw new Error("Missing Langbase API Key. Check your .env.local file.");
-}
+const langbase = getLangbase();
 
-const langbase = new Langbase({ apiKey });
 
 // Upload text to Langbase memory
 export const uploadToMemory = async (content: string,filename:string) => {
@@ -32,22 +35,26 @@ interface Message {
     role: "user" | "assistant";
     content: string;
 }
-
 const messageHistory: Message[] = [];
-
+let threadId: string | undefined;
 export const chatWithLangbase = async (message: string) => {
+    
     try {
         console.log("Sending message to Langbase:", message);
 
         // Add the new user message to the history
         messageHistory.push({ role: "user", content: message });
 
-        const { stream } = await langbase.pipe.run({
+        const response = await langbase.pipe.run({
             name: "crawl-pages",
             stream: true,
-            messages: messageHistory, // Send the entire message history
+            messages: messageHistory,   
         });
-
+        if(response.threadId){
+            threadId=response.threadId;
+        }
+        const {stream}=response
+        console.log("Stream:", stream);
         const runner = getRunner(stream);
 
         let result = "";
